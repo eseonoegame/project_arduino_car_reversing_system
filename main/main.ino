@@ -1,41 +1,114 @@
-/*
-Carte arduino UNO.
-*/
+// qaund pin a 1 alors pas de resistance 
+// Définition des numéros de port
+const int trigPin = 11; // Trigger (émission)
+const int echoPin = 12; // Echo (réception)
+//const int led = 8;
 
-// ---- importation des librairies ----
+#define led 9
 
-#include "Ultrasonic.h"
+const int periodeD = 2000;
+int periodeL = 100;
+unsigned long debut = 0;
+int etatLed = 0;
 
-// ---- declaration des variables ---- 
 
-Ultrasonic ultrasonic(9, 8); // Trig et Echo
+// Variables utiles
+long duree;    // durée de l'echo
+int distance;  // distance
 
+// ---- définition des fonctions ----
 
-// ---- declaration des fonctions ----
-
-void setup() 
+int getDistance(void)
 {
-  Serial.begin(9600); // initialize serial communication at 9600 bits per second.
-  pinMode(11, OUTPUT);
-  pinMode(12, OUTPUT);
+  int distance1;
+  // Émission d'un signal de durée 10 microsecondes
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Écoute de l'écho
+  duree = pulseIn(echoPin, HIGH);
+  // Calcul de la distance
+  distance1 = duree * 0.034 / 2; //distance = 1/2 vitesse du son fois la durée 
+  // Affichage de la distance dans le Moniteur Série
+  return distance1;
 }
 
-unsigned int getDistance()
+void turnLed(int state)
 {
-  unsigned int dist = ultrasonic.Ranging(CM);
-  return dist;
+  switch (state)
+  {
+  case 0:
+    digitalWrite(led,LOW);
+  case 1:
+    digitalWrite(led,HIGH);
+  }
 }
 
-
-// ---- MAIN ----
-
-void loop() 
-{     
-  // put your main code here, to run repeatedly:
- 
-  Serial.print(getDistance());
-  Serial.println(" cm");
-  delay(1000);
-
+void testDistance()
+{
+  if ( (millis()-debut) > periodeD )
+  {
+    distance = getDistance();
+    Serial.print(distance);
+    Serial.print("\n");
+    debut = millis();
+  }
 }
- 
+
+void testLed()
+{
+  if (0 < distance and distance < 10)
+  Serial.print("0 < distance < 10\n");
+  {
+    periodeL = 10;
+    switch (etatLed)
+    {
+    case 0:
+      turnLed(1);
+    case 1:
+      turnLed(0);
+    }
+  }
+  if (10 < distance and distance < 20)
+  {
+    periodeL = 100;
+    switch (etatLed)
+    {
+    case 0:
+      turnLed(1);
+    case 1:
+      turnLed(0);
+    }
+  }
+  if (20 < distance and distance < 30)
+  {
+    periodeL = 1000;
+    switch (etatLed)
+    {
+    case 0:
+      turnLed(1);
+    case 1:
+      turnLed(0);
+    }
+  }
+  if (40 < distance)
+  {
+    turnLed(0);
+  }
+}
+
+void setup()
+{
+  pinMode(trigPin, OUTPUT); // Configuration du port du Trigger comme une SORTIE
+  pinMode(echoPin, INPUT);  // Configuration du port de l'Echo comme une ENTREE
+  pinMode(led, OUTPUT);
+  Serial.begin(9600);        // Démarrage de la communication série
+}
+
+void loop()
+{
+  testDistance(); // vérifie si il est temps de regarder la distance
+  testLed();  // regarde si j'allume la led car osbtacle proche
+}
