@@ -1,10 +1,8 @@
-// qaund pin a 1 alors pas de resistance 
-// Définition des numéros de port
 const int trigPin = 11; // Trigger (émission)
 const int echoPin = 12; // Echo (réception)
-//const int led = 8;
-
+int buzzerPin = 9;
 #define led 9
+#define sun A0
 
 const int periodeD = 2000;
 int periodeL = 100;
@@ -46,13 +44,24 @@ void turnLed(int state)
   }
 }
 
+
+
+void testBuzz(int duree)
+{
+  tone(buzzerPin, duree);
+  noTone(buzzerPin);
+}
+
+
+
+
 void testDistance()
 {
   if ( (millis()-debut) > periodeD )
   {
     distance = getDistance();
-    Serial.print(distance);
-    Serial.print("\n");
+    //Serial.print(distance);
+    //Serial.print("\n");
     debut = millis();
   }
 }
@@ -99,16 +108,35 @@ void testLed()
   }
 }
 
+void testSun()
+{
+  int lumos = analogRead(sun)
+  if (0 <lumos and lumos < 10)
+  {
+    periodeL = 1
+  }
+}
+
+
 void setup()
 {
   pinMode(trigPin, OUTPUT); // Configuration du port du Trigger comme une SORTIE
   pinMode(echoPin, INPUT);  // Configuration du port de l'Echo comme une ENTREE
   pinMode(led, OUTPUT);
   Serial.begin(9600);        // Démarrage de la communication série
+  pinMode(buzzerPin, OUTPUT);
 }
 
 void loop()
 {
-  testDistance(); // vérifie si il est temps de regarder la distance
-  testLed();  // regarde si j'allume la led car osbtacle proche
+  testDistance(); // vérifie si il est temps de regarder la distance.
+  testBuzzer();  // Buzz avec une fréquence qui dépend de la distance.
+  testSun();    // Test l'intensité lumineuse et allume la led en fonction. 
+  testLed();   // regarde si j'allume la led carpas de lumière.
 }
+
+
+
+
+
+
