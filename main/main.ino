@@ -1,22 +1,24 @@
-const int trigPin = 11; // Trigger (émission)
-const int echoPin = 12; // Echo (réception)
-int buzzerPin = 9;
-#define led 9
-#define sun A0
+// ---- définition des variables ----
 
-const int periodeD = 2000;
+// Pin de la carte.
+const int trigPin = 11;  // Trigger (émission)
+const int echoPin = 12;  // Echo (réception)
+const int buzzerPin = 10;
+const int led1Pin = 8;
+const int led2Pin = 7;
+const int sunPin = A0;
+
+// Variables globales.
+int periodeD = 2000;
 int periodeL = 100;
 unsigned long debut = 0;
 int etatLed = 0;
-
-
-// Variables utiles
 long duree;    // durée de l'echo
 int distance;  // distance
 
 // ---- définition des fonctions ----
 
-int getDistance(void)
+int getDistance(void)  // retourne la distance de l'obstacle détecté par le capteur.
 {
   int distance1;
   // Émission d'un signal de durée 10 microsecondes
@@ -28,37 +30,42 @@ int getDistance(void)
   // Écoute de l'écho
   duree = pulseIn(echoPin, HIGH);
   // Calcul de la distance
-  distance1 = duree * 0.034 / 2; //distance = 1/2 vitesse du son fois la durée 
+  distance1 = duree * 0.034 / 2;  //distance = 1/2 vitesse du son fois la durée
   // Affichage de la distance dans le Moniteur Série
   return distance1;
 }
 
-void turnLed(int state)
+void turnLed(int state, int intensite) // allume la led plus ou moins fort.
 {
-  switch (state)
+  if ((millis()-debut)>periodeL)
   {
-  case 0:
-    digitalWrite(led,LOW);
-  case 1:
-    digitalWrite(led,HIGH);
+    switch (etatLed)
+    {
+      case 0:
+        digitalWrite(led1Pin, LOW);
+        etatLed = 1;
+      case 1:
+        digitalWrite(led1Pin, HIGH);
+        etatLed = 0;
+    }
+    switch (intensite)
+    {
+      case 0:
+        //rien
+      case 1:
+        periodeL = 100;
+      case 2:
+        periodeL = 10;
+      case 3:
+        periodeL = 1;
+  }
+  debut = millis();
   }
 }
 
-
-
-void testBuzz(int duree)
+void testDistance() // print la distance tout les T secondes.
 {
-  tone(buzzerPin, duree);
-  noTone(buzzerPin);
-}
-
-
-
-
-void testDistance()
-{
-  if ( (millis()-debut) > periodeD )
-  {
+  if ((millis() - debut) > periodeD) {
     distance = getDistance();
     //Serial.print(distance);
     //Serial.print("\n");
@@ -66,77 +73,44 @@ void testDistance()
   }
 }
 
-void testLed()
+void testSun() // allume la led "phare" plus ou moins fortement selon la lumière présente.
 {
-  if (0 < distance and distance < 10)
-  Serial.print("0 < distance < 10\n");
+  // supérieur à  1000 = noire
+  int lum = int(analogRead(A0));
+  Serial.print(analogRead(A0));
+  Serial.print("\n");
+  if (lum > 1000) 
   {
-    periodeL = 10;
-    switch (etatLed)
-    {
-    case 0:
-      turnLed(1);
-    case 1:
-      turnLed(0);
-    }
+    turnLed(1,3);  // on allume la led énormément.
   }
-  if (10 < distance and distance < 20)
+  else if (800 < lum and lum < 1000)
   {
-    periodeL = 100;
-    switch (etatLed)
-    {
-    case 0:
-      turnLed(1);
-    case 1:
-      turnLed(0);
-    }
+    turnLed(1,2); // on allume la led beaucoup.
   }
-  if (20 < distance and distance < 30)
+  else if (500 < lum and lum < 800)
   {
-    periodeL = 1000;
-    switch (etatLed)
-    {
-    case 0:
-      turnLed(1);
-    case 1:
-      turnLed(0);
-    }
+    turnLed(1,1); // on éteint la led un peu.
   }
-  if (40 < distance)
+  else if (500<lum)
   {
-    turnLed(0);
+    turnLed(0,0); // on éteint la led.
   }
 }
 
-void testSun()
+void setup() 
 {
-  int lumos = analogRead(sun)
-  if (0 <lumos and lumos < 10)
-  {
-    periodeL = 1
-  }
-}
-
-
-void setup()
-{
-  pinMode(trigPin, OUTPUT); // Configuration du port du Trigger comme une SORTIE
-  pinMode(echoPin, INPUT);  // Configuration du port de l'Echo comme une ENTREE
-  pinMode(led, OUTPUT);
-  Serial.begin(9600);        // Démarrage de la communication série
+  pinMode(trigPin, OUTPUT);  // Configuration du port du Trigger comme une SORTIE
+  pinMode(echoPin, INPUT);   // Configuration du port de l'Echo comme une ENTREE
+  pinMode(led1Pin, OUTPUT);
+  pinMode(led2Pin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
+  Serial.begin(9600);  // Démarrage de la communication série
 }
 
-void loop()
+// ---- MAIN ----
+
+void loop() // appellé en boucle par le processeur.
 {
-  testDistance(); // vérifie si il est temps de regarder la distance.
-  testBuzzer();  // Buzz avec une fréquence qui dépend de la distance.
-  testSun();    // Test l'intensité lumineuse et allume la led en fonction. 
-  testLed();   // regarde si j'allume la led carpas de lumière.
+  //testBuzzer();  // Buzz avec une fréquence qui dépend de la distance.
+  testSun();      // Allume le phare avec une intensité qui dépend de la distance.
 }
-
-
-
-
-
-
