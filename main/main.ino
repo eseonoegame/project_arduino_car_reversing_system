@@ -25,7 +25,7 @@ int distance;  // distance
 int etatBuzzer = 0;
 int dureeEteint = 200;
 int dureeAllume = 200;
-int dureeBuzzer = 200;
+int dureeBuzzer = dureeEteint;
 unsigned long debutB = 0;
 
 // ---- définition des fonctions ----
@@ -54,22 +54,28 @@ void turnLed(int state, int intensite) // allume la led plus ou moins fort.
     switch (etatLed)
     {
       case 0:
-        digitalWrite(led1Pin, LOW);
+        digitalWrite(led2Pin, LOW);
         etatLed = 1;
+        break;
       case 1:
-        digitalWrite(led1Pin, HIGH);
+        digitalWrite(led2Pin, HIGH);
         etatLed = 0;
+        break;
     }
     switch (intensite)
     {
-      case 0:
-        //rien
+      default: 
+        periodeL = 1000;
+        break;
       case 1:
         periodeL = 100;
+        break;
       case 2:
         periodeL = 10;
+        break;
       case 3:
         periodeL = 1;
+        break;
   }
   debutL = millis();
   }
@@ -114,17 +120,17 @@ void testDuree()  // Change la duree d'allumage du buzzer en fonction de la dist
   distance=getDistance();
   if (distance>5 and distance<=10 )
   {
-    dureeEteint=200;
+    dureeEteint=500;
     //Serial.print("dureeEteint=200\n");
   }
   if (distance>10 and distance<=15) 
   {
-    dureeEteint=750;
+    dureeEteint=2000;
     //Serial.print("dureeEteint=500\n");
   }
    if (distance>15 and distance<=20) 
   {
-    dureeEteint=1200;
+    dureeEteint=4000;
     //Serial.print("dureeEteint=800\n");
   }
 }
@@ -150,12 +156,19 @@ void testBuzzer() // change l'etat du buzzer en fonction de la duree eteinte ou 
       //Serial.print("Buzzer off\n");
     }
     debutB = millis();
-    Serial.print(dureeBuzzer);
-    Serial.print(distance);
-    Serial.print("\n");
-    
   }
+}
 
+void debug()
+{
+  Serial.print("dureeBuzzer: ");
+  Serial.print(dureeBuzzer);
+  Serial.print(" | distance: ");
+  Serial.print(distance);
+  Serial.print(" | etatBuzzer:");
+  Serial.print(etatBuzzer);
+  Serial.print("\n");
+    
 }
 
 void setup() 
@@ -175,4 +188,5 @@ void loop() // appellé en boucle par le processeur.
   testSun();      // Allume le phare avec une intensité qui dépend de la distance.
   testDuree();   // Test si la distance implique de changer la durée du bip.
   testBuzzer(); // Test si il est temps de changer l'etat du buzzer. Buzz avec une fréquence qui dépend de la distance.
+  debug();
 }
