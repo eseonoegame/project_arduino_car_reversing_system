@@ -5,7 +5,7 @@ const int trigPin = 11;  // Trigger (émission)
 const int echoPin = 12;  // Echo (réception)
 const int buzzerPin = 10;
 const int led1Pin = 8; // led recul
-const int led2Pin = 13; // led phare
+const int led2Pin = A1; // led phare
 const int sunPin = A0;
 
 // --- Variables globales. ----
@@ -16,6 +16,8 @@ unsigned long debutD = 0;
 int periodeL = 100;
 unsigned long debutL = 0;
 int etatLed = 0;
+int intensite = 0;
+int lum = 0;
 
 // Variable pour capteur distance.
 long dureeEcho;    // durée de l'echo
@@ -47,71 +49,27 @@ int getDistance(void)  // retourne la distance de l'obstacle détecté par le ca
   return distance1;
 }
 
-void turnLed(int state, int intensite) // allume la led plus ou moins fort.
-{
-  if ((millis()-debutL)>periodeL)
-  {
-    switch (etatLed)
-    {
-      case 0:
-        digitalWrite(led2Pin, LOW);
-        etatLed = 1;
-        break;
-      case 1:
-        digitalWrite(led2Pin, HIGH);
-        etatLed = 0;
-        break;
-    }
-    switch (intensite)
-    {
-      default: 
-        periodeL = 1000;
-        break;
-      case 1:
-        periodeL = 100;
-        break;
-      case 2:
-        periodeL = 10;
-        break;
-      case 3:
-        periodeL = 1;
-        break;
-  }
-  debutL = millis();
-  }
-}
-
 void testDistance() // print la distance tout les T secondes.
 {
   if ((millis() - debutD) > periodeD) {
     distance = getDistance();
-    Serial.print(distance);
-    Serial.print("\n");
+    //Serial.print(distance);
+    //Serial.print("\n");
     debutD = millis();
   }
 }
 
-void testSun() // allume la led "phare" plus ou moins fortement selon la lumière présente.
+void testSun() // allume la led "phare" plus ou moins fortement selon la lumière présente. (compris entre 1050 (noire) et 255)
 {
-  // supérieur à  1000 = noire
-  int lum = int(analogRead(A0));
-  //Serial.print(analogRead(A0));
-  //Serial.print("\n");
-  if (lum > 1000) 
+  lum = int(analogRead(A0));
+  intensite = lum/4;
+  if (lum < 300)
   {
-    turnLed(1,3);  // on allume la led énormément.
+    analogWrite(led2Pin, 0);
   }
-  else if (800 < lum and lum < 1000)
+  else
   {
-    turnLed(1,2); // on allume la led beaucoup.
-  }
-  else if (500 < lum and lum < 800)
-  {
-    turnLed(1,1); // on éteint la led un peu.
-  }
-  else if (500<lum)
-  {
-    turnLed(0,0); // on éteint la led.
+    analogWrite(led2Pin, intensite);
   }
 }
 
@@ -141,7 +99,7 @@ void testBuzzer() // change l'etat du buzzer en fonction de la duree eteinte ou 
   {
     if (etatBuzzer==0 and getDistance()<=20)
     {
-      digitalWrite(buzzerPin, HIGH);
+      //digitalWrite(buzzerPin, HIGH);
       digitalWrite(led1Pin, HIGH);
       etatBuzzer=1;
       dureeBuzzer=dureeAllume; // duree avant prochain changement d'etat
@@ -149,7 +107,7 @@ void testBuzzer() // change l'etat du buzzer en fonction de la duree eteinte ou 
     }
     else if (etatBuzzer==1)
     {
-      digitalWrite(buzzerPin, LOW);
+      //digitalWrite(buzzerPin, LOW);
       digitalWrite(led1Pin, LOW);
       etatBuzzer=0;
       dureeBuzzer=dureeEteint;
@@ -167,6 +125,10 @@ void debug()
   Serial.print(distance);
   Serial.print(" | etatBuzzer:");
   Serial.print(etatBuzzer);
+  Serial.print(" | lum:");
+  Serial.print(lum);
+  Serial.print(" | intensite:");
+  Serial.print(intensite);
   Serial.print("\n");
     
 }
