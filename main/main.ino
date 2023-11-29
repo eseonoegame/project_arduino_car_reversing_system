@@ -5,7 +5,7 @@ const int trigPin = 11;  // Trigger (émission)
 const int echoPin = 12;  // Echo (réception)
 const int buzzerPin = 10;
 const int led1Pin = 8; // led recul
-const int led2Pin = A1; // led phare
+const int led2Pin = 5; // led phare
 const int sunPin = A0;
 
 // --- Variables globales. ----
@@ -34,7 +34,7 @@ unsigned long debutB = 0;
 
 int getDistance(void)  // retourne la distance de l'obstacle détecté par le capteur.
 {
-  int distance1;
+  int d;
   // Émission d'un signal de durée 10 microsecondes
   digitalWrite(trigPin, LOW);
   delayMicroseconds(5);
@@ -44,9 +44,9 @@ int getDistance(void)  // retourne la distance de l'obstacle détecté par le ca
   // Écoute de l'écho
   dureeEcho = pulseIn(echoPin, HIGH);
   // Calcul de la distance
-  distance1 = dureeEcho * 0.034 / 2;  //distance = 1/2 vitesse du son fois la durée
+  d = dureeEcho * 0.034 / 2;  //distance = 1/2 vitesse du son fois la durée
   // Affichage de la distance dans le Moniteur Série
-  return distance1;
+  return d;
 }
 
 void testDistance() // print la distance tout les T secondes.
@@ -62,8 +62,8 @@ void testDistance() // print la distance tout les T secondes.
 void testSun() // allume la led "phare" plus ou moins fortement selon la lumière présente. (compris entre 1050 (noire) et 255)
 {
   lum = int(analogRead(A0));
-  intensite = lum/4;
-  if (lum < 300)
+  intensite = -(940-lum)*3;
+  if (lum < 500)
   {
     analogWrite(led2Pin, 0);
   }
