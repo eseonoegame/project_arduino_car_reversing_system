@@ -33,7 +33,7 @@ unsigned long debutB = 0;
 // Variables pour moteurs.
 int dureeM=2000;
 int debutM=0;
-int mode;
+int mode=1;
 int etatM =0;
 
 const int IN1 = 4;
@@ -43,7 +43,7 @@ const int IN4 = 7;
 
 // ---- définition des fonctions ----
 
-int getDistance(void)  // retourne la distance de l'obstacle détecté par le capteur.
+int getDistance()  // retourne la distance de l'obstacle détecté par le capteur.
 {
   int d;
   // Émission d'un signal de durée 10 microsecondes
@@ -59,15 +59,6 @@ int getDistance(void)  // retourne la distance de l'obstacle détecté par le ca
   return d;
 }
 
-void testDistance() // print la distance tout les T secondes.
-{
-  if ((millis() - debutD) > periodeD) {
-    distance = getDistance();
-    //Serial.print(distance);
-    //Serial.print("\n");
-    debutD = millis();
-  }
-}
 
 void testSun() // allume la led "phare" plus ou moins fortement selon la lumière présente. (compris entre 1050 (noire) et 255)
 {
@@ -83,32 +74,31 @@ void testSun() // allume la led "phare" plus ou moins fortement selon la lumièr
   }
 }
 
-void testDuree()  // Change la duree d'allumage du buzzer en fonction de la distance.
+void testDuree(int d)  // Change la duree d'allumage du buzzer en fonction de la distance.
 { 
-  distance=getDistance();
-  if (distance>0 and distance<=5 )
+  if (d>0 and d<=5 )
   {
     dureeEteint=50;
   }
-  if (distance>5 and distance<=10) 
+  if (d>5 and d<=10) 
   {
     dureeEteint=200;
   }
-   if (distance>10 and distance<=20) 
+   if (d>10 and d<=20) 
   {
     dureeEteint=600;
   }
-  if (distance>20 and distance<=30) 
+  if (d>20 and d<=30) 
   {
     dureeEteint=1000;
   }
 }
 
-void testBuzzer() // change l'etat du buzzer en fonction de la duree eteinte ou allumee.
+void testBuzzer(int d) // change l'etat du buzzer en fonction de la duree eteinte ou allumee.
 {
   if (millis()-debutB>dureeBuzzer)
   {
-    if (etatBuzzer==0 and getDistance()<=30)
+    if (etatBuzzer==0 and d<=30)
     {
       digitalWrite(buzzerPin, HIGH);
       digitalWrite(led1Pin, HIGH);
@@ -126,43 +116,28 @@ void testBuzzer() // change l'etat du buzzer en fonction de la duree eteinte ou 
   }
 }
 
-void testMoteur() // change l'etat du buzzer en fonction de la duree eteinte ou allumee.
-{
-  Serial.print(millis());
-  Serial.print("  ");
-  Serial.print(debutM);
-  Serial.print("  ");
-  Serial.print(dureeM);
-  Serial.print("  \n");
-  
+void testMoteur(int d) // change l'etat du buzzer en fonction de la duree eteinte ou allumee.
+{  
   if (((millis()-debutM)>dureeM) and (mode == 1))
   {
     switch (etatM)
     {
       case 0:
         etatM = 1;
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, HIGH);
+        digitalWrite(IN3, LOW);
+        digitalWrite(IN4, HIGH);
         break;
       case 1:
         etatM = 0;
+        digitalWrite(IN1, HIGH);
+        digitalWrite(IN2, LOW);
+        digitalWrite(IN3, HIGH);
+        digitalWrite(IN4, LOW);
         break;
     }
     debutM = millis();
-  }
-  if (etatM==0)
-  {
-    // tourne dans le sens 0.
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
-  }
-  else if (etatBuzzer==1)
-  {
-    // tourne dans le sens 1.
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
   }
 }
 
@@ -217,11 +192,11 @@ void setup()
 
 void loop() // appellé en boucle par le processeur.
 {
-  //testSun();        // Test si la lumière extérieur implique de changer l'intensité lumineuse du phare.
-  //testDuree();     // Test si la distance implique de changer la durée du bip.
-  //testBuzzer();   // Test si il est temps de changer l'etat du buzzer. Buzz avec une fréquence qui dépend de la durée d'allumage.
-  testMoteur();  // Change sens du moteur en fonction du temps.
-  mode = 1;
+  distance = getDistance(); 
+  testDuree(distance);     // Test si la distance implique de changer la durée du bip.
+  testBuzzer(distance);   // Test si il est temps de changer l'etat du buzzer. Buzz avec une fréquence qui dépend de la durée d'allumage.
+  testMoteur(distance);  // Change sens du moteur en fonction du temps.
   //testBouton(); // Vérifie dans quel mode de fonctionnement est le système.
+  testSun();        // Test si la lumière extérieur implique de changer l'intensité lumineuse du phare.
   debug();     // montre valeurs des variables de distances, d'etat des lampes et buzzer, d'intensite lumineuse.
 }
