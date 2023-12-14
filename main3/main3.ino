@@ -10,6 +10,9 @@ const int buzzerPin = 10;
 const int led1Pin = 12; // led recul
 const int led2Pin = 11; // led phare
 const int sunPin = A0;
+const int bouton = 13;
+
+int etatBouton = 0;
 
 // --- Variables globales. ----
 int periodeD = 2000;
@@ -20,7 +23,7 @@ int periodeL = 100;
 unsigned long debutL = 0;
 int etatLed = 0;
 float intensite = 0;
-int lum = 0;
+float lum = 0;
 
 // Variable pour capteur distance.
 long dureeEcho; // durée de l'echo
@@ -36,8 +39,7 @@ unsigned long debutB = 0;
 // Variables pour moteurs.
 int dureeM = 2000;
 int debutM = 0;
-int mode = 1;
-int etatM = 0;
+int etatM = 0; // sens 1 ou 2 et eteinrt (0)
 
 const int IN1 = 7;
 const int IN2 = 6;
@@ -65,8 +67,8 @@ int getDistance() // retourne la distance de l'obstacle détecté par le capteur
 void testSun() // allume la led "phare" plus ou moins fortement selon la lumière présente. (compris entre 1030 (noir dehors) et 850)
 {
   lum = int(analogRead(A0));
-  intensite = ((17 / 12) * (lum))-(7225/6);
-  if (lum < 500)
+  intensite = map(lum,925,1023,0,255);//1,417 * lum - 1204,17;
+  if (lum < 925)
   {
     analogWrite(led2Pin, 0);
   }
@@ -118,31 +120,6 @@ void testBuzzer(int d) // change l'etat du buzzer en fonction de la duree eteint
   }
 }
 
-void testMoteur2(int d) // change l'etat du buzzer en fonction de la duree eteinte ou allumee.
-{
-  if (((millis() - debutM) > dureeM) and (mode == 1))
-  {
-    switch (etatM)
-    {
-    case 0:
-      etatM = 1;
-      digitalWrite(IN1, LOW);
-      digitalWrite(IN2, HIGH);
-      digitalWrite(IN3, LOW);
-      digitalWrite(IN4, HIGH);
-      break;
-    case 1:
-      etatM = 0;
-      digitalWrite(IN1, HIGH);
-      digitalWrite(IN2, LOW);
-      digitalWrite(IN3, HIGH);
-      digitalWrite(IN4, LOW);
-      break;
-    }
-    debutM = millis();
-  }
-}
-
 void testMoteur(int d) // change l'etat du buzzer en fonction de la duree eteinte ou allumee.
 {
   if (d < 15)
@@ -151,29 +128,44 @@ void testMoteur(int d) // change l'etat du buzzer en fonction de la duree eteint
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, LOW);
-    etatM = 0;
   }
   else
   {
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
-    etatM = 1;
+    if (etatM ==1)
+    {
+      digitalWrite(IN1, HIGH);
+      digitalWrite(IN2, LOW);
+      digitalWrite(IN3, HIGH);
+      digitalWrite(IN4, LOW);
+    }
+    else
+    {
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, HIGH);
+      digitalWrite(IN3, LOW);
+      digitalWrite(IN4, HIGH);
+    }
   }
 }
 
 void testBouton() // change l'etat du buzzer en fonction de la duree eteinte ou allumee.
 {
-  // if (bouton presse)
+  if (digitalRead(bouton) == LOW)
   {
-    switch (mode)
+    etatBouton = 1;
+    switch (etatM)
     {
     case 0:
-      mode = 1;
+      etatM = 1;
+      break;
     case 1:
-      mode = 0;
+      etatM = 0;
+      break;
     }
+  }
+  else
+  {
+    etatBouton = 0;
   }
 }
 
@@ -181,8 +173,6 @@ void debug()
 {
   Serial.print("dureeBuzzer: ");
   Serial.print(dureeBuzzer);
-  Serial.print(" | distance: ");
-  Serial.print(distance);
   Serial.print(" | etatBuzzer:");
   Serial.print(etatBuzzer);
   Serial.print(" | lum:");
@@ -193,6 +183,10 @@ void debug()
   Serial.print(etatM);
   Serial.print(" | dureeEteint:");
   Serial.print(dureeEteint);
+    Serial.print(" | etatBouton: ");
+  Serial.print(etatBouton);
+  Serial.print(" | distance: ");
+  Serial.print(distance);
   Serial.print("\n");
 }
 
@@ -200,6 +194,7 @@ void setup()
 {
   pinMode(trigPin, OUTPUT); // Configuration du port du Trigger comme une SORTIE
   pinMode(echoPin, INPUT);  // Configuration du port de l'Echo comme une ENTREE
+  pinMode(bouton, INPUT_PULLUP);  
   pinMode(led1Pin, OUTPUT);
   pinMode(led2Pin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
@@ -219,7 +214,7 @@ void loop() // appellé en boucle par le processeur.
   testDuree(distance);  // Test si la distance implique de changer la durée du bip.
   testBuzzer(distance); // Test si il est temps de changer l'etat du buzzer. Buzz avec une fréquence qui dépend de la durée d'allumage.
   testMoteur(distance); // Change sens du moteur en fonction du temps.
-  // testBouton(); // Vérifie dans quel mode de fonctionnement est le système.
+  testBouton(); // Vérifie dans quel mode de fonctionnement est le système.
   testSun(); // Test si la lumière extérieur implique de changer l'intensité lumineuse du phare.
-  debug();   // montre valeurs des variables de distances, d'etat des lampes et buzzer, d'intensite lumineuse.
+  //debug();   // montre valeurs des variables de distances, d'etat des lampes et buzzer, d'intensite lumineuse.
 }
